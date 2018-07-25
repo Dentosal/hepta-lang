@@ -1,2 +1,5 @@
-{( n -- nsquared ) DUP * } /SQUARED
-{( a b -- c )  SQUARED  SWAP SQUARED  +} /SUM-OF-SQUARES
+{( n -- nsquared ) dup * } /squared
+{( a b -- c )  squared  swap squared  +} /sum_of_squares
+
+3 4 sum_of_squares
+3 3 * 4 4 * + assert.eq

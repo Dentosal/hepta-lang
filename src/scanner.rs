@@ -1,14 +1,19 @@
 use std::iter::Peekable;
 use std::str::Chars;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum TokenScanAction {
+    Continue,
+    DoneConsumeThis,
+    DoneContinueHere,
+}
+
 #[derive(Debug, Clone)]
 pub(crate) enum TokenScanState {
     /// Comment(nesting_level)
     Comment(u8),
     /// DecInteger(positive, so_far)
     DecInteger(bool, u64),
-    /// HexInteger(so_far)
-    HexInteger(u64),
     /// Identifier(so_far)
     Identifier(String),
     /// AssignIdentifier(so_far)
@@ -32,88 +37,83 @@ impl TokenScanState {
         }
     }
 
-    /// Ok(state) means continue scanning, Err(Some(state)) means done, Err(None) means error
-    pub(crate) fn scan_join(self, c: char) -> Result<TokenScanState, Option<TokenScanState>> {
+    fn scan_join(self, c: char) -> Result<(TokenScanState, TokenScanAction), ()> {
+        use self::TokenScanAction::*;
         use self::TokenScanState::*;
-        match self {
+
+        match self.clone() {
             Comment(cmt) => match c {
                 ')' => if cmt == 0 {
-                    Err(Some(Comment(0)))
+                    Ok((Comment(0), DoneConsumeThis))
                 } else {
-                    Ok(Comment(cmt - 1))
+                    Ok((Comment(cmt - 1), Continue))
                 },
-                '(' => Ok(Comment(cmt + 1)),
-                _ => Ok(Comment(cmt)),
+                '(' => Ok((Comment(cmt + 1), Continue)),
+                _ => Ok((Comment(cmt), Continue)),
             },
-            DecInteger(true, 0) => match c {
-                'x' => Ok(HexInteger(0)),
-                '1'..='9' => Ok(DecInteger(
-                    true,
-                    u64::from_str_radix(&c.to_string(), 10).unwrap(),
+            DecInteger(neg, 0) => match c {
+                '1'..='9' => Ok((
+                    DecInteger(neg, u64::from_str_radix(&c.to_string(), 10).unwrap()),
+                    Continue,
                 )),
-                _ => Err(None),
-            },
-            DecInteger(false, 0) => match c {
-                '1'..='9' => Ok(DecInteger(
-                    false,
-                    u64::from_str_radix(&c.to_string(), 10).unwrap(),
-                )),
-                _ => Err(None),
+                x if x.is_whitespace() => Ok((self, DoneContinueHere)),
+                _ => Err(()),
             },
             DecInteger(neg, int) => match c {
-                '0'..='9' => Ok(DecInteger(
-                    neg,
-                    int * 10 + u64::from_str_radix(&c.to_string(), 10).unwrap(),
+                '0'..='9' => Ok((
+                    DecInteger(
+                        neg,
+                        int * 10 + u64::from_str_radix(&c.to_string(), 10).unwrap(),
+                    ),
+                    Continue,
                 )),
-                _ => Err(None),
+                x if x.is_whitespace() => Ok((self, DoneContinueHere)),
+                _ => Err(()),
             },
-            HexInteger(int) => match c {
-                '0'..='9' => Ok(HexInteger(
-                    int * 0x10 + u64::from_str_radix(&c.to_string(), 10).unwrap(),
-                )),
-                _ => Err(None),
-            },
-            Identifier(ident) => if c.is_whitespace() {
-                Err(Some(Identifier(ident)))
+            Identifier(ident) => if c.is_whitespace() || c == '{' || c == '}' {
+                Ok((self, DoneContinueHere))
             } else {
-                Ok(Identifier(format!("{}{}", ident, c)))
+                Ok((Identifier(format!("{}{}", ident, c)), Continue))
             },
-            AssignIdentifier(ident) => if c.is_whitespace() {
-                Err(Some(AssignIdentifier(ident)))
+            AssignIdentifier(ident) => if c.is_whitespace() || c == '{' || c == '}' {
+                Ok((self, DoneContinueHere))
             } else {
-                Ok(AssignIdentifier(format!("{}{}", ident, c)))
+                Ok((AssignIdentifier(format!("{}{}", ident, c)), Continue))
             },
-            FunctionStart => Err(Some(FunctionStart)),
-            FunctionEnd => Err(Some(FunctionEnd)),
+            FunctionStart => Ok((FunctionStart, DoneContinueHere)),
+            FunctionEnd => Ok((FunctionEnd, DoneContinueHere)),
         }
     }
 }
 
-pub(crate) fn scan_token(input: &mut Peekable<Chars>) -> Option<TokenScanState> {
+pub(crate) fn scan_token(input: &mut Peekable<Chars<'_>>) -> Result<TokenScanState, ()> {
+    use self::TokenScanAction::*;
+
     let mut state: Option<TokenScanState> = None;
 
-    while input.peek()?.is_whitespace() {
+    while input.peek().ok_or(())?.is_whitespace() {
         input.next();
     }
 
-    for c in input {
-        state = if let Some(s) = state.clone() {
-            match s.scan_join(c) {
-                Ok(new_state) => Some(new_state),
-                Err(opt) => match opt {
-                    Some(new_state) => {
-                        break;
-                    }
-                    None => {
-                        // TODO: Error
-                        return None;
-                    }
-                },
+    while let Some(&c) = input.peek() {
+        // println!("> {:?} : {:?}", c, state.clone());
+        state = Some(if let Some(s) = state.clone() {
+            let (new_state, action) = s.scan_join(c)?;
+
+            if action != DoneContinueHere {
+                input.next();
             }
+
+            if action != Continue {
+                return Ok(new_state);
+            }
+
+            new_state
         } else {
-            Some(TokenScanState::scan_first(c))
-        };
+            input.next();
+            TokenScanState::scan_first(c)
+        });
     }
 
-    state
+    state.ok_or(())
 }

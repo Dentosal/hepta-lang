@@ -1,4 +1,7 @@
 #![feature(rust_2018_preview)]
+#![warn(rust_2018_idioms)]
+#![allow(unreachable_pub)]
+#![allow(dead_code)]
 
 use std::env;
 use std::fs::File;
@@ -24,12 +27,14 @@ fn main() {
         return;
     }
 
-    let fileargs: Vec<String> = args.iter()
+    let fileargs: Vec<String> = args
+        .iter()
         .skip(1)
         .filter(|a| !a.starts_with("-"))
         .cloned()
         .collect();
-    let interactive = fileargs.is_empty() || args.contains(&"-i".to_owned())
+    let interactive = fileargs.is_empty()
+        || args.contains(&"-i".to_owned())
         || args.contains(&"--interactive".to_owned());
 
     let mut interp = interpreter::Interpreter::new().with_builins();
