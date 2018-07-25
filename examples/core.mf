@@ -1,0 +1,2 @@
+{( n -- nsquared ) DUP * } /SQUARED
+{( a b -- c )  SQUARED  SWAP SQUARED  +} /SUM-OF-SQUARES
