@@ -12,8 +12,6 @@ enum TokenScanAction {
 pub(crate) enum TokenScanState {
     /// Comment(nesting_level)
     Comment(u8),
-    /// DecInteger(positive, so_far)
-    DecInteger(bool, u64),
     /// Identifier(so_far)
     Identifier(String),
     /// AssignIdentifier(so_far)
@@ -28,8 +26,6 @@ impl TokenScanState {
         use self::TokenScanState::*;
         match c {
             '(' => Comment(0),
-            '-' => DecInteger(false, 0),
-            '0' => DecInteger(true, 0),
             '/' => AssignIdentifier(String::new()),
             '{' => FunctionStart,
             '}' => FunctionEnd,
@@ -50,25 +46,6 @@ impl TokenScanState {
                 },
                 '(' => Ok((Comment(cmt + 1), Continue)),
                 _ => Ok((Comment(cmt), Continue)),
-            },
-            DecInteger(neg, 0) => match c {
-                '1'..='9' => Ok((
-                    DecInteger(neg, u64::from_str_radix(&c.to_string(), 10).unwrap()),
-                    Continue,
-                )),
-                x if x.is_whitespace() => Ok((self, DoneContinueHere)),
-                _ => Err(()),
-            },
-            DecInteger(neg, int) => match c {
-                '0'..='9' => Ok((
-                    DecInteger(
-                        neg,
-                        int * 10 + u64::from_str_radix(&c.to_string(), 10).unwrap(),
-                    ),
-                    Continue,
-                )),
-                x if x.is_whitespace() => Ok((self, DoneContinueHere)),
-                _ => Err(()),
             },
             Identifier(ident) => if c.is_whitespace() || c == '{' || c == '}' {
                 Ok((self, DoneContinueHere))
