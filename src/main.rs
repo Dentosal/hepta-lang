@@ -37,7 +37,7 @@ fn main() {
         || args.contains(&"-i".to_owned())
         || args.contains(&"--interactive".to_owned());
 
-    let mut interp = interpreter::Interpreter::new().with_builins();
+    let mut interp = interpreter::Interpreter::new().with_builtins();
 
     for filepath in fileargs.iter() {
         let mut f = File::open(filepath).expect("file not found");

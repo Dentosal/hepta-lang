@@ -33,7 +33,7 @@ impl Interpreter {
     }
 
     /// Returns interpreter with builtin functions loaded
-    pub fn with_builins(mut self) -> Self {
+    pub fn with_builtins(mut self) -> Self {
         self
     }
 
