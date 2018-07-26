@@ -54,15 +54,15 @@ impl Interpreter {
         self.scan.clear();
     }
 
-    fn pop_assign_to(&mut self, name: &String) -> Result<(), Error> {
+    fn pop_assign_to(&mut self, name: &str) -> Result<(), Error> {
         let value = self.data.pop().ok_or(Error::StackUndeflow)?;
-        let path = SymbolPath::from_str(&name.to_owned()).realize(&self.current_namespace);
+        let path = SymbolPath::from_str(name).realize(&self.current_namespace);
         self.dict.insert(path, value);
         Ok(())
     }
 
-    fn execute_ident(&mut self, ident: &String) -> Result<(), Error> {
-        println!("{:<20} |{:?}", ident, self.data);
+    fn execute_ident(&mut self, ident: &str) -> Result<(), Error> {
+        // println!("{:<20} |{:?}", ident, self.data);
 
         // Numeric values cannot be overridden
         if let Ok(int_value) = ident.parse::<u64>() {
@@ -71,7 +71,7 @@ impl Interpreter {
         } else {
             let sp = SymbolPath::from_str(ident);
             let rp = sp.clone().realize(&self.current_namespace);
-            if let Some(val) = self.dict.resolve(rp) {
+            if let Some(val) = self.dict.resolve(&rp) {
                 match val {
                     Value::BuiltinFunction(f) => f.call(self),
                     Value::Function(f) => {

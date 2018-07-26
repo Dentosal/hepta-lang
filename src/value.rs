@@ -1,7 +1,8 @@
+#![allow(stutter)]
+
 use std::cmp::PartialEq;
 use std::fmt;
 use std::hash::{Hash, Hasher};
-use std::ops;
 
 use crate::error::Error;
 use crate::interpreter::Interpreter;
@@ -31,7 +32,7 @@ impl BuiltinFunction {
     }
 }
 impl PartialEq for BuiltinFunction {
-    fn eq(&self, other: &BuiltinFunction) -> bool {
+    fn eq(&self, other: &Self) -> bool {
         self.name == other.name
     }
 }

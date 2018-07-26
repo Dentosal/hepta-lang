@@ -8,7 +8,7 @@ pub enum Error {
     StackUndeflow,
     NameNotDefined(SymbolPath),
     IntegerOverflow,
-    /// ArgumentTypeError(actual, allowed)
-    ArgumentTypeError(ValueType, Vec<ValueType>),
+    /// WrongArgumentType(actual, allowed)
+    WrongArgumentType(ValueType, Vec<ValueType>),
     AssertionFailed,
 }

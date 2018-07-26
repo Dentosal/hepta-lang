@@ -30,7 +30,7 @@ enum TokenScanState {
     FunctionEnd,
 }
 impl TokenScanState {
-    fn scan_first(c: char) -> TokenScanState {
+    fn scan_first(c: char) -> Self {
         use self::TokenScanState::*;
         match c {
             '(' => Comment(0),
@@ -41,7 +41,7 @@ impl TokenScanState {
         }
     }
 
-    fn scan_join(self, c: char) -> Result<(TokenScanState, TokenScanAction), ()> {
+    fn scan_join(self, c: char) -> Result<(Self, TokenScanAction), ()> {
         use self::TokenScanAction::*;
         use self::TokenScanState::*;
 
@@ -70,12 +70,12 @@ impl TokenScanState {
         }
     }
 
-    fn to_token(self) -> Option<Token> {
+    fn to_token(&self) -> Option<Token> {
         use self::TokenScanState::*;
         match self {
             Comment(_) => None,
-            Identifier(ident) => Some(Token::Identifier(ident)),
-            AssignIdentifier(ident) => Some(Token::AssignIdentifier(ident)),
+            Identifier(ident) => Some(Token::Identifier(ident.clone())),
+            AssignIdentifier(ident) => Some(Token::AssignIdentifier(ident.clone())),
             FunctionStart => Some(Token::FunctionStart),
             FunctionEnd => Some(Token::FunctionEnd),
         }

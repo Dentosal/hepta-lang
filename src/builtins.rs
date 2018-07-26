@@ -27,13 +27,13 @@ fn f_add(interp: &mut Interpreter) -> Result<(), Error> {
             interp.data.push(Value::Integer(res));
             Ok(())
         } else {
-            Err(Error::ArgumentTypeError(
+            Err(Error::WrongArgumentType(
                 arg2.type_(),
                 vec![ValueType::Integer],
             ))
         }
     } else {
-        Err(Error::ArgumentTypeError(
+        Err(Error::WrongArgumentType(
             arg1.type_(),
             vec![ValueType::Integer],
         ))
@@ -50,13 +50,13 @@ fn f_multiply(interp: &mut Interpreter) -> Result<(), Error> {
             interp.data.push(Value::Integer(res));
             Ok(())
         } else {
-            Err(Error::ArgumentTypeError(
+            Err(Error::WrongArgumentType(
                 arg2.type_(),
                 vec![ValueType::Integer],
             ))
         }
     } else {
-        Err(Error::ArgumentTypeError(
+        Err(Error::WrongArgumentType(
             arg1.type_(),
             vec![ValueType::Integer],
         ))
@@ -81,7 +81,7 @@ fn f_assert(interp: &mut Interpreter) -> Result<(), Error> {
             Err(Error::AssertionFailed)
         }
     } else {
-        Err(Error::ArgumentTypeError(
+        Err(Error::WrongArgumentType(
             arg1.type_(),
             vec![ValueType::Boolean],
         ))

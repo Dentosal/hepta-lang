@@ -38,7 +38,7 @@ impl SymbolPath {
         }
     }
 
-    pub fn from_str(s: &str) -> SymbolPath {
+    pub fn from_str(s: &str) -> Self {
         assert!(!s.is_empty());
 
         let mut fields = s.split('.').peekable();
@@ -77,11 +77,11 @@ impl Namespace {
         self.values.insert(key, value);
     }
 
-    pub fn remove(&mut self, key: AbsoluteSymbolPath) -> Option<Value> {
-        self.values.remove(&key)
+    pub fn remove(&mut self, key: &AbsoluteSymbolPath) -> Option<Value> {
+        self.values.remove(key)
     }
 
-    pub fn resolve(&self, key: AbsoluteSymbolPath) -> Option<Value> {
-        self.values.get(&key).cloned()
+    pub fn resolve(&self, key: &AbsoluteSymbolPath) -> Option<Value> {
+        self.values.get(key).cloned()
     }
 }
