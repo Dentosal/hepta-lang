@@ -36,12 +36,12 @@ fn main() -> ExitCode {
     let args: Vec<String> = env::args().collect();
 
     if args.contains(&"-h".to_owned()) || args.contains(&"--help".to_owned()) {
-        println!("Usage: microforth [--version | --help] [filename]");
+        println!("Usage: hepta [--version | --help] [filename]");
         return ExitCode::SUCCESS;
     }
 
     if args.contains(&"-V".to_owned()) || args.contains(&"--version".to_owned()) {
-        println!("MicroForth {}", VERSION);
+        println!("Hepta {}", VERSION);
         return ExitCode::SUCCESS;
     }
 
@@ -74,7 +74,7 @@ fn main() -> ExitCode {
 
     // REPL
 
-    println!("MicroForth {} REPL", VERSION);
+    println!("Hepta {} REPL", VERSION);
     println!(
         "Stack item size: {} bytes",
         std::mem::size_of::<value::Value>()
@@ -82,7 +82,7 @@ fn main() -> ExitCode {
 
     let histfile = {
         let mut path = dirs::home_dir().expect("No user home directory found");
-        path.push(".microforth_history");
+        path.push(".hepta_history");
         path
     };
 
