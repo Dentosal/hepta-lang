@@ -4,11 +4,13 @@
 #![allow(dead_code)]
 #![feature(termination_trait_lib)]
 #![feature(process_exitcode_placeholder)]
+#![deny(unused_must_use)]
 
 use std::env;
 use std::fs::File;
 use std::io::prelude::*;
 
+mod builtins;
 mod error;
 mod interpreter;
 mod namespace;
@@ -48,8 +50,6 @@ fn main() -> ExitCode {
         let mut f = File::open(filepath).expect("file not found");
         let mut contents = String::new();
         f.read_to_string(&mut contents).expect("Could not read");
-
-        println!("{}", contents);
 
         if let Err(error) = interp.execute(&contents.to_owned(), Some(filepath)) {
             println!("Error: {:?}", error);

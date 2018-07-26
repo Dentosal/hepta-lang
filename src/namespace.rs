@@ -61,6 +61,7 @@ impl SymbolPath {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Namespace {
     /// Only store absolute paths as keys
     values: HashMap<AbsoluteSymbolPath, Value>,
