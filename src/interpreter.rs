@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::error::Error;
-use crate::namespace::{Namespace, SymbolPath, AbsoluteSymbolPath};
+use crate::namespace::{AbsoluteSymbolPath, Namespace, SymbolPath};
 use crate::scanner::{scan_token, Token};
 use crate::value::{HeapPointer, Value};
 
