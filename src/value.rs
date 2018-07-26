@@ -1,38 +1,33 @@
+use crate::scanner::Token;
+
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+pub struct HeapPointer(pub usize);
+
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+pub struct StructDefinitionIndex(pub usize);
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ValueType {
     Integer,
     Index,
-    FunctionPointer,
-    HeapPointer,
-    UserDefined,
+    Function,
+    Pointer,
+    UserDefined(StructDefinitionIndex),
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct TypeTag {
-    tag: u32,
-}
-impl TypeTag {
-    fn get(&self) -> ValueType {
-        match self.tag {
-            0 => ValueType::Integer,
-            1 => ValueType::Index,
-            2 => ValueType::FunctionPointer,
-            3 => ValueType::HeapPointer,
-            _ => ValueType::UserDefined,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Value {
-    ttag: TypeTag,
-    value: u64,
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Value {
+    Index(usize),
+    Integer(u64),
+    Function(Vec<Token>),
+    Pointer(HeapPointer, Box<Value>),
+    UserDefined(StructDefinitionIndex),
 }
 
 pub struct UserStructMetaField {
     pub name: String,
     pub size: usize,
-    pub ttag: TypeTag,
+    pub ttag: ValueType,
 }
 
 pub struct UserStructMeta {

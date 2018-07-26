@@ -2,29 +2,34 @@
 #![warn(rust_2018_idioms)]
 #![allow(unreachable_pub)]
 #![allow(dead_code)]
+#![feature(termination_trait_lib)]
+#![feature(process_exitcode_placeholder)]
 
 use std::env;
 use std::fs::File;
 use std::io::prelude::*;
 
+mod error;
 mod interpreter;
+mod namespace;
 mod scanner;
-mod stack;
 mod value;
+
+use std::process::ExitCode;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
-fn main() {
+fn main() -> ExitCode {
     let args: Vec<String> = env::args().collect();
 
     if args.contains(&"-h".to_owned()) || args.contains(&"--help".to_owned()) {
         println!("Usage: microforth [--version | --help] [filename]");
-        return;
+        return ExitCode::SUCCESS;
     }
 
     if args.contains(&"-V".to_owned()) || args.contains(&"--version".to_owned()) {
         println!("MicroForth {}", VERSION);
-        return;
+        return ExitCode::SUCCESS;
     }
 
     let fileargs: Vec<String> = args
@@ -46,11 +51,14 @@ fn main() {
 
         println!("{}", contents);
 
-        interp.execute(&contents.to_owned(), Some(filepath));
+        if let Err(error) = interp.execute(&contents.to_owned(), Some(filepath)) {
+            println!("Error: {:?}", error);
+            return ExitCode::FAILURE;
+        }
     }
 
     if !interactive {
-        return;
+        return ExitCode::SUCCESS;
     }
 
     println!("MicroForth {}", VERSION);
@@ -61,6 +69,6 @@ fn main() {
 
     loop {
         println!("> ");
-        break;
+        return ExitCode::SUCCESS;
     }
 }

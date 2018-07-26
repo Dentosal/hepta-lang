@@ -1,6 +1,14 @@
 use std::iter::Peekable;
 use std::str::Chars;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Token {
+    Identifier(String),
+    AssignIdentifier(String),
+    FunctionStart,
+    FunctionEnd,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum TokenScanAction {
     Continue,
@@ -9,7 +17,7 @@ enum TokenScanAction {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) enum TokenScanState {
+enum TokenScanState {
     /// Comment(nesting_level)
     Comment(u8),
     /// Identifier(so_far)
@@ -22,13 +30,13 @@ pub(crate) enum TokenScanState {
     FunctionEnd,
 }
 impl TokenScanState {
-    pub(crate) fn scan_first(c: char) -> TokenScanState {
+    fn scan_first(c: char) -> TokenScanState {
         use self::TokenScanState::*;
         match c {
             '(' => Comment(0),
-            '/' => AssignIdentifier(String::new()),
             '{' => FunctionStart,
             '}' => FunctionEnd,
+            '/' => AssignIdentifier(String::new()),
             chr => Identifier(chr.to_string()),
         }
     }
@@ -61,9 +69,20 @@ impl TokenScanState {
             FunctionEnd => Ok((FunctionEnd, DoneContinueHere)),
         }
     }
+
+    fn to_token(self) -> Option<Token> {
+        use self::TokenScanState::*;
+        match self {
+            Comment(_) => None,
+            Identifier(ident) => Some(Token::Identifier(ident)),
+            AssignIdentifier(ident) => Some(Token::AssignIdentifier(ident)),
+            FunctionStart => Some(Token::FunctionStart),
+            FunctionEnd => Some(Token::FunctionEnd),
+        }
+    }
 }
 
-pub(crate) fn scan_token(input: &mut Peekable<Chars<'_>>) -> Result<TokenScanState, ()> {
+fn scan_one_token(input: &mut Peekable<Chars<'_>>) -> Result<TokenScanState, ()> {
     use self::TokenScanAction::*;
 
     let mut state: Option<TokenScanState> = None;
@@ -93,4 +112,12 @@ pub(crate) fn scan_token(input: &mut Peekable<Chars<'_>>) -> Result<TokenScanSta
     }
 
     state.ok_or(())
+}
+
+pub(crate) fn scan_token(mut input: &mut Peekable<Chars<'_>>) -> Result<Token, ()> {
+    loop {
+        if let Some(token) = scan_one_token(&mut input)?.to_token() {
+            return Ok(token);
+        }
+    }
 }
