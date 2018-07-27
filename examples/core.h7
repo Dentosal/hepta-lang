@@ -1,5 +1,4 @@
 (Some functions)
-
 {dup mul} /squared
 {squared swap squared add} /sum_of_squares
 

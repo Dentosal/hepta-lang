@@ -8,8 +8,18 @@ impl AbsoluteSymbolPath {
     pub fn root() -> Self {
         AbsoluteSymbolPath(Vec::new())
     }
+    pub fn parent(&self) -> Option<Self> {
+        let mut new = self.0.clone();
+        new.pop()?;
+        Some(AbsoluteSymbolPath(new))
+    }
     pub fn join(&self, other: &RelativeSymbolPath) -> Self {
         AbsoluteSymbolPath(self.0.iter().chain(other.0.iter()).cloned().collect())
+    }
+    pub fn child(&self, other: &str) -> Self {
+        let mut new = self.0.clone();
+        new.push(other.to_owned());
+        AbsoluteSymbolPath(new)
     }
 }
 
@@ -41,7 +51,7 @@ impl SymbolPath {
     pub fn from_str(s: &str) -> Self {
         assert!(!s.is_empty());
 
-        let mut fields = s.split('.').peekable();
+        let mut fields = s.split("::").peekable();
         let absolute = fields.peek().unwrap().is_empty();
 
         if absolute {

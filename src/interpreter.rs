@@ -61,6 +61,28 @@ impl Interpreter {
         Ok(())
     }
 
+    fn set_namespace(&mut self, name: &str) -> Result<(), Error> {
+        let path = SymbolPath::from_str(name).realize(&self.current_namespace);
+        self.current_namespace = path;
+        Ok(())
+    }
+
+    fn execute_value(&mut self, value: Value) -> Result<(), Error> {
+        match value {
+            Value::BuiltinFunction(f) => f.call(self),
+            Value::Function(f) => {
+                for token in f.iter().rev().cloned() {
+                    self.call.push(token);
+                }
+                Ok(())
+            },
+            v => {
+                self.data.push(v);
+                Ok(())
+            },
+        }
+    }
+
     fn execute_ident(&mut self, ident: &str) -> Result<(), Error> {
         // println!("{:<20} |{:?}", ident, self.data);
 
@@ -72,22 +94,18 @@ impl Interpreter {
             let sp = SymbolPath::from_str(ident);
             let rp = sp.clone().realize(&self.current_namespace);
             if let Some(val) = self.dict.resolve(&rp) {
-                match val {
-                    Value::BuiltinFunction(f) => f.call(self),
-                    Value::Function(f) => {
-                        for token in f.iter().rev().cloned() {
-                            self.call.push(token);
-                        }
-                        Ok(())
-                    },
-                    v => {
-                        self.data.push(v);
-                        Ok(())
-                    },
+                return self.execute_value(val);
+            } else if let SymbolPath::Relative(ref rsp) = sp {
+                let mut cursor = rp;
+                while let Some(p) = cursor.parent() {
+                    let cp = p.join(rsp);
+                    if let Some(val) = self.dict.resolve(&cp) {
+                        return self.execute_value(val);
+                    }
+                    cursor = p;
                 }
-            } else {
-                Err(Error::NameNotDefined(sp))
             }
+            Err(Error::NameNotDefined(sp))
         }
     }
 
@@ -113,6 +131,7 @@ impl Interpreter {
                 },
                 Token::FunctionEnd => Err(Error::FunctionEndOutsideFunction),
                 Token::AssignIdentifier(ident) => self.pop_assign_to(&ident),
+                Token::SetNamespace(ident) => self.set_namespace(&ident),
                 Token::Identifier(ident) => self.execute_ident(&ident),
             }
         }

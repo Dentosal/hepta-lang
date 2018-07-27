@@ -1,0 +1,24 @@
+#::ns_1
+1 /test1
+
+#::ns_2
+2 /test2
+
+#::main
+
+3 /test3
+
+(Test that current scope is resolved correctly)
+
+test3 3 eq assert
+
+::ns_1::test1 1 eq assert
+::ns_2::test2 2 eq assert
+::main::test3 3 eq assert
+
+test3 3 eq assert
+
+(Test that global scope resolution is correct)
+
+{abort} /assert
+1 1 eq ::assert

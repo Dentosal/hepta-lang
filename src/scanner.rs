@@ -5,6 +5,7 @@ use std::str::Chars;
 pub enum Token {
     Identifier(String),
     AssignIdentifier(String),
+    SetNamespace(String),
     FunctionStart,
     FunctionEnd,
 }
@@ -24,6 +25,8 @@ enum TokenScanState {
     Identifier(String),
     /// AssignIdentifier(so_far)
     AssignIdentifier(String),
+    /// SetNamespace(so_far)
+    SetNamespace(String),
     /// Start of function definition
     FunctionStart,
     /// End of function definition
@@ -37,6 +40,7 @@ impl TokenScanState {
             '{' => FunctionStart,
             '}' => FunctionEnd,
             '/' => AssignIdentifier(String::new()),
+            '#' => SetNamespace(String::new()),
             chr => Identifier(chr.to_string()),
         }
     }
@@ -65,6 +69,11 @@ impl TokenScanState {
             } else {
                 Ok((AssignIdentifier(format!("{}{}", ident, c)), Continue))
             },
+            SetNamespace(ident) => if c.is_whitespace() || c == '{' || c == '}' {
+                Ok((self, DoneContinueHere))
+            } else {
+                Ok((SetNamespace(format!("{}{}", ident, c)), Continue))
+            },
             FunctionStart => Ok((FunctionStart, DoneContinueHere)),
             FunctionEnd => Ok((FunctionEnd, DoneContinueHere)),
         }
@@ -76,6 +85,7 @@ impl TokenScanState {
             Comment(_) => None,
             Identifier(ident) => Some(Token::Identifier(ident.clone())),
             AssignIdentifier(ident) => Some(Token::AssignIdentifier(ident.clone())),
+            SetNamespace(ident) => Some(Token::SetNamespace(ident.clone())),
             FunctionStart => Some(Token::FunctionStart),
             FunctionEnd => Some(Token::FunctionEnd),
         }
