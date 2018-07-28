@@ -56,9 +56,13 @@ impl SymbolPath {
 
         if absolute {
             fields.next();
-            SymbolPath::Absolute(AbsoluteSymbolPath(fields.map(|s| s.to_owned()).collect()))
+            SymbolPath::Absolute(AbsoluteSymbolPath(
+                fields.map(|s| s.to_owned()).collect(),
+            ))
         } else {
-            SymbolPath::Relative(RelativeSymbolPath(fields.map(|s| s.to_owned()).collect()))
+            SymbolPath::Relative(RelativeSymbolPath(
+                fields.map(|s| s.to_owned()).collect(),
+            ))
         }
     }
 

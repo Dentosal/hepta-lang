@@ -1,3 +1,6 @@
+# Build system caches
+*.cache
+
 # Rust
 /target
 **/*.rs.bk

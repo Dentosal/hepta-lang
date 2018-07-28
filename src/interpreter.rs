@@ -44,6 +44,7 @@ impl Interpreter {
 
     pub(crate) fn register_builtin(&mut self, bf: BuiltinFunction) {
         let sp = SymbolPath::from_str(&bf.name()).realize(&AbsoluteSymbolPath::root());
+        debug_assert!(self.dict.resolve(&sp) == None);
         self.dict.insert(sp, Value::BuiltinFunction(bf));
     }
 

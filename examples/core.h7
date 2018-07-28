@@ -1,6 +1,6 @@
 (Some functions)
-{dup mul} /squared
-{squared swap squared add} /sum_of_squares
+{dup saturating_mul} /squared
+{squared swap squared saturating_add} /sum_of_squares
 
 3 4 sum_of_squares
-3 3 mul 4 4 mul add eq assert
+3 3 saturating_mul 4 4 saturating_mul saturating_add eq assert
