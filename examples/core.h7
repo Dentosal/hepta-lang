@@ -3,4 +3,5 @@
 {squared swap squared saturating_add} /sum_of_squares
 
 3 4 sum_of_squares
-3 3 saturating_mul 4 4 saturating_mul saturating_add eq assert
+3 3 saturating_mul 4 4 saturating_mul saturating_add
+eq assert

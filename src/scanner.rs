@@ -1,6 +1,8 @@
 use std::iter::Peekable;
 use std::str::Chars;
 
+use crate::error::SyntaxError;
+
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum Token {
     Identifier(String),
@@ -45,7 +47,7 @@ impl TokenScanState {
         }
     }
 
-    fn scan_join(self, c: char) -> Result<(Self, TokenScanAction), ()> {
+    fn scan_join(self, c: char) -> Result<(Self, TokenScanAction), SyntaxError> {
         use self::TokenScanAction::*;
         use self::TokenScanState::*;
 
@@ -65,7 +67,11 @@ impl TokenScanState {
                 Ok((Identifier(format!("{}{}", ident, c)), Continue))
             },
             AssignIdentifier(ident) => if c.is_whitespace() || c == '{' || c == '}' {
-                Ok((self, DoneContinueHere))
+                if ident.is_empty() {
+                    Err(SyntaxError::AssignToEmpty)
+                } else {
+                    Ok((self, DoneContinueHere))
+                }
             } else {
                 Ok((AssignIdentifier(format!("{}{}", ident, c)), Continue))
             },
@@ -92,12 +98,23 @@ impl TokenScanState {
     }
 }
 
-fn scan_one_token(input: &mut Peekable<Chars<'_>>) -> Result<TokenScanState, ()> {
+fn scan_one_token(
+    input: &mut Peekable<Chars<'_>>,
+) -> Result<Option<TokenScanState>, SyntaxError> {
     use self::TokenScanAction::*;
 
     let mut state: Option<TokenScanState> = None;
 
-    while input.peek().ok_or(())?.is_whitespace() {
+    while {
+        match input.peek() {
+            None => if state.is_none() {
+                return Ok(None);
+            } else {
+                return Err(SyntaxError::UnexpectedEndOfInput);
+            },
+            Some(s) => s.is_whitespace(),
+        }
+    } {
         input.next();
     }
 
@@ -111,7 +128,7 @@ fn scan_one_token(input: &mut Peekable<Chars<'_>>) -> Result<TokenScanState, ()>
             }
 
             if action != Continue {
-                return Ok(new_state);
+                return Ok(Some(new_state));
             }
 
             new_state
@@ -121,13 +138,21 @@ fn scan_one_token(input: &mut Peekable<Chars<'_>>) -> Result<TokenScanState, ()>
         });
     }
 
-    state.ok_or(())
+    match state {
+        Some(s) => Ok(Some(s)),
+        None => Err(SyntaxError::UnexpectedEndOfInput),
+    }
 }
 
-pub(crate) fn scan_token(mut input: &mut Peekable<Chars<'_>>) -> Result<Token, ()> {
+pub(crate) fn scan_token(
+    mut input: &mut Peekable<Chars<'_>>,
+) -> Result<Option<Token>, SyntaxError> {
     loop {
-        if let Some(token) = scan_one_token(&mut input)?.to_token() {
-            return Ok(token);
-        }
+        let x: Option<TokenScanState> = scan_one_token(&mut input)?;
+        return match x.map(|ts| ts.to_token()) {
+            Some(Some(t)) => Ok(Some(t)),
+            Some(None) => Ok(None),
+            None => Ok(None),
+        };
     }
 }

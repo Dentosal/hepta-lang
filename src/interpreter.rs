@@ -9,6 +9,7 @@ use crate::value::{BuiltinFunction, HeapPointer, Value};
 #[derive(Debug, Clone)]
 pub struct Interpreter {
     current_namespace: AbsoluteSymbolPath,
+    skip_next: bool,
 
     nesting: u32,
     scan: Vec<Token>,
@@ -23,6 +24,7 @@ impl Interpreter {
     pub fn new() -> Self {
         Self {
             current_namespace: AbsoluteSymbolPath::root(),
+            skip_next: false,
             nesting: 0,
             scan: Vec::new(),
             data: Vec::new(),
@@ -36,6 +38,10 @@ impl Interpreter {
     pub fn with_builtins(mut self) -> Self {
         builtins::register_all(&mut self);
         self
+    }
+
+    pub fn set_skip(&mut self) {
+        self.skip_next = true;
     }
 
     pub fn in_function(&self) -> bool {
@@ -68,7 +74,7 @@ impl Interpreter {
         Ok(())
     }
 
-    fn execute_value(&mut self, value: Value) -> Result<(), Error> {
+    pub(crate) fn execute_value(&mut self, value: Value) -> Result<(), Error> {
         match value {
             Value::BuiltinFunction(f) => f.call(self),
             Value::Function(f) => {
@@ -118,12 +124,28 @@ impl Interpreter {
                 Token::FunctionEnd => {
                     self.nesting -= 1;
                     if !self.in_function() {
-                        self.push_current_function();
+                        if self.skip_next {
+                            self.skip_next = false;
+                        } else {
+                            self.push_current_function();
+                        }
                     }
                 },
                 token => self.scan.push(token),
             };
             Ok(())
+        } else if self.skip_next {
+            match token {
+                Token::FunctionStart => {
+                    self.nesting += 1;
+                    Ok(())
+                },
+                Token::FunctionEnd => Err(Error::FunctionEndOutsideFunction),
+                _ => {
+                    self.skip_next = false;
+                    Ok(())
+                },
+            }
         } else {
             match token {
                 Token::FunctionStart => {
@@ -153,11 +175,20 @@ impl Interpreter {
 
     pub fn execute(&mut self, input: &str, _filepath: Option<&str>) -> Result<(), Error> {
         let mut in_stream = input.chars().peekable();
-        while let Ok(token) = scan_token(&mut in_stream) {
-            self.execute_token(token)?;
 
-            while !self.idle() {
-                self.step()?;
+        while in_stream.peek().is_some() {
+            match scan_token(&mut in_stream) {
+                Ok(None) => break,
+                Ok(Some(token)) => {
+                    self.execute_token(token)?;
+
+                    while !self.idle() {
+                        self.step()?;
+                    }
+                },
+                Err(e) => {
+                    return Err(Error::InvalidSyntax(e));
+                },
             }
         }
 

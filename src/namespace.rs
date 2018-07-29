@@ -49,6 +49,7 @@ impl SymbolPath {
     }
 
     pub fn from_str(s: &str) -> Self {
+        assert!(s.trim() == s);
         assert!(!s.is_empty());
 
         let mut fields = s.split("::").peekable();

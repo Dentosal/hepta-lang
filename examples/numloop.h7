@@ -1,0 +1,4 @@
+1 {
+    dbgshow 1 saturating_add
+    dup 11 eq not if loop
+} /loop loop

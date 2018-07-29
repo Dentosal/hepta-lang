@@ -82,7 +82,7 @@ fn main() -> ExitCode {
     println!("Hepta {} REPL", VERSION);
     println!(
         "Stack item size: {} bytes",
-        std::mem::size_of::<value::Value>()
+        std::mem::size_of::<value::Value>(),
     );
 
     let histfile = {
